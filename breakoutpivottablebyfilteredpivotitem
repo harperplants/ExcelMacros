@@ -1,0 +1,38 @@
+Sub ExplodeTable()
+Dim PvtItem as PivotItem
+Dim PvtTable as PivotTable
+
+'Source: p. 372 Excel 2016 Pivot Table Data Crunching Mr Excel Library Bill Jelen, Michael Alexander; Pearson|QUE quepublishing.com | mrexcel.com
+
+'Change variables to suit your scenario
+Const strFieldName = "Market"  '<- Change Field Name
+Const strTriggerRange = "B4" '<-Change Trigger Range, and can it be multiple cells?
+
+'Set the pivot table name if needed
+
+     Set PvtTable = ActiveSheet.PivotTables("PivotTable1") '<- Change Pivot-Table Name if Needed
+
+'Start looping through each item in the selected field
+     For each PvtItem in PvtTable.PivotFields(strFieldName).PivotItems
+     PvtTable.PivotFields(strFieldName).CurrentPage = PvtItem.Name
+     Range(strTriggerRange).ShowDetail = True
+
+     'Name the temp sheet for easy cleanup later
+     ActiveSheet.Name = "TempSheet"
+
+    'copy data to new workbook and delete the temp sheet
+    ActiveSheet.Cells.Copy
+    Workbooks.Add
+    ActiveSheet.Paste
+    Cells.EntireColumn.AutoFit
+
+    Application.DisplayAlerts = False
+    ActiveWorkbook.SaveAs Filename:=ThisWorkbook.Path & "\" &
+    PvtItem.Name & ".xls" '<- Try changing to .pdf
+               ActiveWorkbook.Close
+               Sheets("Tempsheet").Delete
+               Application.DisplayAlerts = True
+
+           Next PvtItem
+
+End Sub       
