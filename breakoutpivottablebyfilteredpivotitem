@@ -5,7 +5,7 @@ Dim PvtTable as PivotTable
 'Source: p. 372 Excel 2016 Pivot Table Data Crunching Mr Excel Library Bill Jelen, Michael Alexander; Pearson|QUE quepublishing.com | mrexcel.com
 
 'Change variables to suit your scenario
-Const strFieldName = "Market"  '<- Change Field Name
+Const strFieldName = "State"  '<- Change Field Name
 Const strTriggerRange = "B4" '<-Change Trigger Range, and can it be multiple cells?
 
 'Set the pivot table name if needed
