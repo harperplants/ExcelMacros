@@ -40,8 +40,8 @@ ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, filename:= _
         :=False, OpenAfterPublish:=True
 
 'IF INSTEAD YOU WANTED TO SAVE AS EXCEL FILE, SEE BELOW
-'ActiveWorkbook.SaveAs filename:=Path & filename & ".xls"
-'FileFormat:=xlNormal
+'ActiveWorkbook.SaveAs filename:=Path & filename & ".xlsx"
+'FileFormat:=xlWorkbookDefault
 
 
 'ActiveWorkbook.(wsA).ExportAsFixedFormat _
