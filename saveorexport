@@ -1,0 +1,133 @@
+Sub filename_cellvaluexls()
+' Save the file to the path where this macro workbook is currently saved.
+'The file will be named whatever you put into Cell A1.
+'Hyphens, spaces, periods not allowed in file name.
+
+
+'MsgBox "Enter Your File Name in A1"
+
+Dim Path As String
+Dim filename As String
+Path = ThisWorkbook.Path & "\"
+filename = Range("A1")
+ActiveWorkbook.SaveAs filename:=Path & filename & ".xlsx", FileFormat:=xlWorkbookDefault
+End Sub
+
+Sub filename_cellvaluepdf()
+
+MsgBox "Enter Your File Name in A1"
+
+ActiveSheet.Range("A1").Replace _
+ What:=" ", Replacement:="", _
+ SearchOrder:=xlByColumns, MatchCase:=True
+ActiveSheet.Range("A1").Replace _
+ What:=".", Replacement:="", _
+ SearchOrder:=xlByColumns, MatchCase:=True
+ActiveSheet.Range("A1").Replace _
+ What:="-", Replacement:="_", _
+ SearchOrder:=xlByColumns, MatchCase:=True
+
+Dim wsA As Worksheet
+Dim wbA As Workbook
+Dim Path As String
+Dim filename As String
+Path = ThisWorkbook.Path & "\"
+filename = Range("A1")
+
+ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, filename:= _
+        filename _
+        , Quality:=xlQualityStandard, IncludeDocProperties:=True, IgnorePrintAreas _
+        :=False, OpenAfterPublish:=True
+
+'IF INSTEAD YOU WANTED TO SAVE AS EXCEL FILE, SEE BELOW
+'ActiveWorkbook.SaveAs filename:=Path & filename & ".xls"
+'FileFormat:=xlNormal
+
+
+'ActiveWorkbook.(wsA).ExportAsFixedFormat _
+ '       Type:=xlTypePDF,
+
+'IF YOU INSTEAD WANTED TO OPEN THE SAVE FILE AS DIALOG
+'MyFile = Application.GetSaveAsFilename _
+ ' (InitialFileName:=strPathFile, _
+  '      FileFilter:="PDF Files (*.pdf), *.pdf", _
+   '     Title:="Select Folder and FileName to save")
+
+'export to PDF if a folder was selected
+'    wsA.ExportAsFixedFormat _
+ '       Type:=xlTypePDF, _
+  '      filename:=Range("A1"),
+   '     Quality:=xlQualityStandard, _
+    '    IncludeDocProperties:=True, _
+     '   IgnorePrintAreas:=False, _
+       ' OpenAfterPublish:=False
+    'confirmation message with file info
+    
+    MsgBox "PDF file has been created: " _
+      & vbCrLf _
+      & filename
+
+End Sub
+
+Sub PDFsave()
+'This macro opens the SaveAs option with the default file path: you have to set this file path below
+'converts the whole sheet into .pdf file format
+'And opens the .pdf to view <-- you can disable the view after covert option with lower code: OpenAfterPublish:=False
+
+Dim Path As String
+
+ActiveSheet.Range("A1").Replace _
+ What:="-", Replacement:="_", _
+ SearchOrder:=xlByColumns, MatchCase:=True
+ActiveSheet.Range("A1").Replace _
+ What:=" ", Replacement:="", _
+ SearchOrder:=xlByColumns, MatchCase:=True
+
+ActiveSheet.Range("A1").Replace _
+ What:=".", Replacement:="", _
+ SearchOrder:=xlByColumns, MatchCase:=True
+ 
+ 
+     'Name the temp sheet for easy cleanup later
+     ActiveSheet.Name = "TempSheet"
+
+    'copy data to new workbook (see the delete the temp sheet commented out near end of macro)
+    ActiveSheet.Cells.Copy
+    Workbooks.Add
+    ActiveSheet.Paste
+    Cells.EntireColumn.AutoFit
+    
+    pdfName = ActiveSheet.Range("A1")
+    Path = ThisWorkbook.Path & "\" 'This is where you set a default file path.
+    fileSaveName = Application.GetSaveAsFilename(pdfName, _
+    fileFilter:="PDF Files (*.pdf), *.pdf")
+    If fileSaveName <> False Then
+    ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, filename:= _
+        fileSaveName _
+        , Quality:=xlQualityStandard, IncludeDocProperties:=True, IgnorePrintAreas _
+        :=False, OpenAfterPublish:=True
+    End If
+    MsgBox "File Saved to" & " " & fileSaveName
+     ActiveWorkbook.Close
+     'if you wanted to delete the original sheet, remove the ' below
+ '            Sheets("Tempsheet").Delete
+               Application.DisplayAlerts = True
+
+End Sub
+
+Sub SaveasPDFcurrentfileloc()
+
+pdfName = ActiveSheet.Range("A1")
+   '  pdfName = ActiveSheet.Name
+    ChDir ActiveWorkbook.Path & "\"
+'    fileSaveName = ActiveSheet.Name
+     fileSaveName = pdfName
+    
+     ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, filename:= _
+        fileSaveName _
+        , Quality:=xlQualityStandard, IncludeDocProperties:=True, IgnorePrintAreas _
+        :=False, OpenAfterPublish:=True
+    
+    MsgBox "File Saved " & " " & fileSaveName
+End Sub
+
