@@ -1,6 +1,7 @@
 
 Sub PivotReport()
-
+'Source: Excel 2016 Pivot Table Data Crunching by Bill Jelen and Michael Alexander
+'Publisher info: Mr Excel Library, QUE Publishing, Pearson
 Dim WSD As Worksheet
 Dim PTCache As PivotCache
 Dim PT As PivotTable
