@@ -1,0 +1,99 @@
+Sub StateReports()
+
+Dim WSD As Worksheet
+Dim WSR As Worksheet
+Dim WBN As Workbook
+Dim PTCache As PivotCache
+Dim PT As PivotTable
+Dim PRange As Range
+Dim FinalRow As Long
+
+Set WSD = Worksheets("Data")
+
+'Delete any prior pivot tables
+For Each PT in WSD.PivotTables
+         PT.TableRange2.Clear
+    Next PT
+    WSD.Range("M1:Z1").EntireColumn.Clear
+    
+    'Define input area and set up a Pivot Cache
+    
+    'Create the pivot table from pivot cache
+    
+    'Turn off updating while building the table
+    PT.ManualUpdate=True
+    
+    'Set up the row fields
+    PT.AddFields RowFields: = "Account", ColumnFields:="Data", _
+          PageFields:="State" 
+          'other PageFields options: "Product"; "Device"; "Day"
+    
+    
+    'Set up the data fields
+    With Pt.PivotFields("Cost")
+    .Orientation - xlDataField
+    .Function = xlSum
+    .Position = 1
+    .Numberformat = "$#,##0.00"
+    .Name = "Total Cost"
+    End With
+    
+    'Sort descending by cost
+    PT.PivotFields("Account").AutoSort Order:-xlDescending, _
+        field:="Total Cost"
+        
+        'Show only the top 20 accounts
+        'PT.PivotFields("Account").AutoShow Type:=xlAutomatic, Range:=xlTop, _
+        'Count:=20, field:="Total Cost"
+        
+    'Ensure that we get zeros instead of blanks in the data area
+    PT.NullString = "0"
+    
+    'Calc the pivot table
+    PT.ManualUpdate = False
+    PT.ManualUpdate = True
+    Ctr = 0
+    
+    'Loop through each state (or product, device, day etc dependign on how you edit this for various reports
+    
+For Each PivItem in PT.PivotFields("State").PivotItems
+    Ctr = Ctr + 1
+    PT.PivotFields("State").CurrentPage = PivItem.Name
+    PT.ManualUpdate = False
+    PT.ManualUpdate = True
+    
+    
+    'Create a new blank workbook with one worksheet
+    Set WBN = Workbooks.Add(xlBATWorksheet)
+    Set WSR = WBN.Worksheets(1)
+    WSR.Name = PivItem.Name
+    'Set Up Title for REport
+    With.WSR.[A1]
+    .Value = "Google Spend in" & _
+     PivItem.Name
+     End With
+     
+     'Copy the pivot table data to row 3 of the report sheet
+     'Use offset to drop the page & title rows
+     PT.TableRange2.Offset(3,0).Copy
+     
+     WSR.[A3].PasteSpecial Past:-xlPasteValuesandNumberFormats
+     LastRow = WSR.Cells(65536, 1).End(xlUp).Row
+     WSR.Cells(LastRow, 1).Value = "Total"
+     
+     'Do some basic formatting
+     'Autofit columns, bold the headings, right-align
+     '
+    
+     Range("A2").Select
+     
+     Next PivItem
+     
+     'Clear the pivot table
+     PT.TableRange2.Clear
+     Set PTCache = Nothing
+     
+     MsgBox Ctr & "State reports have been created"
+     
+     End Sub
+        
