@@ -17,8 +17,17 @@ For Each PT in WSD.PivotTables
     WSD.Range("M1:Z1").EntireColumn.Clear
     
     'Define input area and set up a Pivot Cache
+FinalRow = WSD.Cells(Application.Rows.Count, 1).End(xlUp).Row
+FinalCol = WSD.Cells(1, Application.Columns.Count). _
+     End(xlToLeft).Column
+     
+Set PRange = WSD.Cells(1, 1).Resize(FinalRow, FinalCol)
+Set PTCache = ActiveWorkbook.PivotCaches.Add(SourceType:= _
+    xlDatabase, SourceData:=PRange.Address)
     
-    'Create the pivot table from pivot cache
+  'Create the Pivot Table from the Pivot Cache
+Set PT = PTCache.CreatePivotTable(TableDestination:=WSD. _
+       Cells(2, FinalCol + 2), TableName:="PivotTable1")
     
     'Turn off updating while building the table
     PT.ManualUpdate=True
