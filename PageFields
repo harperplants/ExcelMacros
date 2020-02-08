@@ -3,7 +3,7 @@ Sub PivotReport()
 
 'Instructions: use with Microsoft Ads or Google Ads reports. For Microsoft Ads, change "Spend" column name 
 'to "Cost" before running.
-'The data for your pivot table needs to at least include client Rep, Cost, Clicks and Conversions.
+'The data for your pivot table needs to at least include client Rep, Account, Cost, Clicks and Conversions.
 'The column header rows should start in cell A1 of your sheet; 
 'delete report info like Date Range and Report Type above column headers before running macro
 
