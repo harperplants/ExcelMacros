@@ -1,4 +1,239 @@
-Sub StateReports()
+
+Sub PivotReport()
+
+'Instructions: use with Microsoft Ads or Google Ads reports. For Microsoft Ads, change "Spend" column name 
+'to "Cost" before running.
+'The data for your pivot table needs to at least include client Rep, Cost, Clicks and Conversions.
+'The column header rows should start in cell A1 of your sheet; 
+'delete report info like Date Range and Report Type above column headers before running macro
+
+'Source:
+'Pivot Table Data Crunching
+'Book details:Mr Excel Library, QUE Publishing / MrExcel.com, Pearson
+'p. 336 (Code that Creates A New Workbook For Each Region)
+'Authors: Bill Jelen, Michael Alexander
+
+Dim WSD As Worksheet
+Dim PTCache As PivotCache
+Dim PT As PivotTable
+Dim PRange As Range
+Dim FinalRow As Long
+Dim TotColumns()
+
+Set WSD = Worksheets(1)
+Dim WSR As Worksheet
+Dim WBO As Workbook
+'Workbook Old
+Dim WBN As Workbook
+'Workbook New
+Set WBO = ActiveWorkbook
+
+MyTitle = WSD.Range("A1").Value
+'Delete any prior pivot tables
+For Each PT In WSD.PivotTables
+      PT.TableRange2.Clear
+    Next PT
+WSD.Range("Q1:XFD1").EntireColumn.Clear
+ '??? Would I need to clear a different range depending on how many columns are in pivot table
+
+ 'Define input area and set up a Pivot Cache
+FinalRow = WSD.Cells(Application.Rows.Count, 1).End(xlUp).Row
+FinalCol = WSD.Cells(1, Application.Columns.Count). _
+     End(xlToLeft).Column
+     
+Set PRange = WSD.Cells(1, 1).Resize(FinalRow, FinalCol)
+Set PTCache = ActiveWorkbook.PivotCaches.Add(SourceType:= _
+    xlDatabase, SourceData:=PRange.Address)
+    
+  'Create the Pivot Table from the Pivot Cache
+Set PT = PTCache.CreatePivotTable(TableDestination:=WSD. _
+       Cells(2, FinalCol + 2), TableName:="PivotTable1")
+       
+'Turn off updating while building the table
+    PT.ManualUpdate = True
+    
+
+'Ensure tabular layout is used
+PT.RowAxisLayout xlTabularRow
+
+'Set up the row fields
+    PT.AddFields RowFields:="State", ColumnFields:="Data"
+    
+'Set up the data fields
+'With PT.PivotFields("Cost")
+'    .Orientation = xlDataField
+ '   .Function = xlSum
+  '  .Position = 1
+   ' .NumberFormat = "$#,##0"
+'End With
+
+With PT.PivotFields("Conversions")
+    .Orientation = xlDataField
+    .Function = xlSum
+    .Position = 1
+    .NumberFormat = "#,##0"
+End With
+
+With PT.PivotFields("Clicks")
+    .Orientation = xlDataField
+    .Function = xlSum
+    .Position = 2
+    .NumberFormat = "#,##0"
+End With
+
+ 'set calculated field
+  ActiveSheet.PivotTables("PivotTable1").CalculatedFields.Add _
+  "CPL", "=Cost / Conversions", True
+' ActiveSheet.PivotTables("PivotTable1").PivotFields("CPL"). _
+'Orientation = xlDataField
+
+With PT.PivotFields("CPL")
+.Orientation = xlDataField
+.Function = xlSum
+.Position = 3
+ .NumberFormat = "$#,##0.00"
+ '.HorizontalAlignment = xlCenter
+  End With
+ 
+ ActiveSheet.PivotTables("PivotTable1").DataPivotField.PivotItems( _
+        "Sum of CPL").Caption = "Cost per Lead"
+
+ ActiveSheet.PivotTables("PivotTable1").DataPivotField.PivotItems( _
+        "Sum of Clicks").Caption = " Clicks"
+
+ ActiveSheet.PivotTables("PivotTable1").DataPivotField.PivotItems( _
+        "Sum of Conversions").Caption = "Leads"
+
+
+'Ensure tabular layout is used
+'PT.RowAxisLayout xlTabularRow
+
+With ActiveSheet.PivotTables("PivotTable1")
+ .ErrorString = "-"
+ .DisplayErrorString = True
+End With
+
+' Specify a page field.
+'Set PivotField = PT.PivotFields("State")
+'PivotField.Orientation = xlPageField
+
+
+'Calc the pivot table before grouping dates
+PT.ManualUpdate = False
+PT.ManualUpdate = True
+'PT.PivotFields("Month").LabelRange.Group _
+ '         Periods:=Array(False, False, False, False, False, False, True)
+
+'Fill in blank cells
+PT.NullString = "0"
+PT.RepeatAllLabels xlRepeatLabels
+
+'Sort by descending spend
+'this isn't working. Try again later.
+PT.PivotFields("Cost").AutoSort Order:=xlDescending, _
+  field:="Sum of Cost"
+  
+  'Suppress Category totals
+  PT.PivotFields("Account").Subtotals(1) = True
+  PT.PivotFields("Account").Subtotals(1) = False
+  
+  'Calc the pivot table
+  PT.ManualUpdate = False
+  PT.ManualUpdate = True
+  
+  'Sort both label fields by descending revenue
+ ' PT.PivotFields("Cost").AutoSort Order:=xlDescendng, _
+  '   field= "Sum of Cost"
+  
+  'Create a New Blank Workbook with one Worksheet
+  Set WBN = Workbooks.Add(xlWBATWorksheet)
+  Set WSR = WBN.Worksheets(1)
+  WSR.Name = "Report"
+  'Set up Title for Report
+  With WSR.[A1]
+       .Value = "Q4 CPL by State"
+       .Style = "Title"
+       End With
+  
+  'Copy the Pivot Table data to row 3 of the Report sheet
+  'Use Offset to eliminate the title row of the pivot table
+  PT.TableRange1.Offset(1, 0).Copy
+  WSR.[A3].PasteSpecial Paste:=xlPasteValuesAndNumberFormats
+  PT.TableRange2.Clear
+  Set PTCache = Nothing
+  
+  'Do some basic formatting
+'Autofit columns, format the headings, right-align
+Range("A3").EntireRow.Style = "Heading 4"
+Range("A3").CurrentRegion.Columns.AutoFit
+Range("A3").EntireRow.HorizontalAlignment = xlRight
+Range("A3:B3").HorizontalAlignment = xlLeft
+ 
+  'Repeat rows 2-3 at the top of each page
+WSR.PageSetup.PrintTitleRows = "$2:$3"
+
+   'Add subtotals
+'FinalCol = Cells(3, 255).End(xlToLeft).Column
+'ReDim Preserve TotColumns(1 To FinalCol - 2)
+'For i = 3 To FinalCol
+ '  TotColumns(i - 2) = i
+   
+  ' Next i
+  ' Range("A3").CurrentRegion.Subtotal GroupBy:=1, Function:=xlSum, _
+   '     TotalList:=TotColumns, Replace:=True, _
+        PageBreaks:=True, SummaryBelowData:=True
+        '
+        
+    'Make sure the columns are wide enough for totals
+    GrandRow = Cells(Rows.Count, 1).End(xlUp).Row
+    Cells(3, 3).Resize(GrandRow - 2, FinalCol - 2).Columns.AutoFit
+    Cells(GrandRow, 3).Resize(1, FinalCol - 2).NumberFormat = "#,##0"
+   'Add a page break before the Grand Total row, otherwise
+   'the product manager for the final Line will have two totals
+   'WSR.HPageBreaks.Add Before:=Cells(GrandRow, 1)
+   
+ 
+ 'Fill in a title for your pdf in cell A1
+'Dim answer As Integer
+'answer = Msgbox("The pdf will be titled whatever is in cell A1 of the newly created workbook where the pivot table was pasted as values", vbOKCancel)
+ 
+ Dim myValue As Variant
+ myValue = InputBox("Please enter your PDF file name.", "Performance Report", "PPC Report")
+ Range("A1").Value = myValue
+ ' If answer = vbOK Then
+  '  Msgbox "Continue"
+    
+   ' ActiveSheet.Range("A1").Replace _
+ 'What:=" ", Replacement:="", _
+ 'SearchOrder:=xlByColumns, MatchCase:=True
+ActiveSheet.Range("A1").Replace _
+ What:=".", Replacement:="", _
+ SearchOrder:=xlByColumns, MatchCase:=True
+ActiveSheet.Range("A1").Replace _
+ What:="-", Replacement:="_", _
+ SearchOrder:=xlByColumns, MatchCase:=True
+
+
+'Dim wsA As Worksheet
+'Dim wbA As Workbook
+
+
+Dim Path As String
+Dim filename As String
+Path = ThisWorkbook.Path & "\"
+filename = Range("A1")
+
+
+ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, filename:= _
+        filename _
+        , Quality:=xlQualityStandard, IncludeDocProperties:=True, IgnorePrintAreas _
+        :=False, OpenAfterPublish:=True
+
+
+  
+End Sub
+
+Sub PageFieldReports()
 
 Dim WSD As Worksheet
 Dim WSR As Worksheet
@@ -10,11 +245,13 @@ Dim FinalRow As Long
 
 Set WSD = Worksheets("Data")
 
-'Delete any prior pivot tables
-For Each PT in WSD.PivotTables
+'Delete any prior pivot tables; note that
+'you may need to adjust which columns to clear (default is column T:Z)
+For Each PT In WSD.PivotTables
          PT.TableRange2.Clear
     Next PT
-    WSD.Range("M1:Z1").EntireColumn.Clear
+    WSD.Range("T1:Z1").EntireColumn.Clear
+    
     
     'Define input area and set up a Pivot Cache
 FinalRow = WSD.Cells(Application.Rows.Count, 1).End(xlUp).Row
@@ -30,25 +267,65 @@ Set PT = PTCache.CreatePivotTable(TableDestination:=WSD. _
        Cells(2, FinalCol + 2), TableName:="PivotTable1")
     
     'Turn off updating while building the table
-    PT.ManualUpdate=True
+    PT.ManualUpdate = True
     
     'Set up the row fields
-    PT.AddFields RowFields: = "Account", ColumnFields:="Data", _
-          PageFields:="State" 
-          'other PageFields options: "Product"; "Device"; "Day"
+    PT.AddFields RowFields:="Account", ColumnFields:="Data", _
+          PageFields:="Rep"
+          'other PageFields options: "Month"; "Device"; "Day"
     
     
     'Set up the data fields
-    With Pt.PivotFields("Cost")
-    .Orientation - xlDataField
+    
+     'set calculated field
+  ActiveSheet.PivotTables("PivotTable1").CalculatedFields.Add _
+  "CPL", "=Cost / Conversions", True
+' ActiveSheet.PivotTables("PivotTable1").PivotFields("CPL"). _
+'Orientation = xlDataField
+
+With PT.PivotFields("CPL")
+.Orientation = xlDataField
+.Function = xlSum
+.Position = 1
+ .NumberFormat = "$#,##0.00"
+ '.HorizontalAlignment = xlCenter
+  End With
+ 
+    
+With PT.PivotFields("Conversions")
+    .Orientation = xlDataField
     .Function = xlSum
-    .Position = 1
-    .Numberformat = "$#,##0.00"
+    .Position = 2
+    .NumberFormat = "#,##0"
+End With
+
+With PT.PivotFields("Clicks")
+    .Orientation = xlDataField
+    .Function = xlSum
+    .Position = 3
+    .NumberFormat = "#,##0"
+End With
+
+    With PT.PivotFields("Cost")
+    .Orientation = xlDataField
+    .Function = xlSum
+    .Position = 4
+    .NumberFormat = "$#,##0.00"
     .Name = "Total Cost"
     End With
     
+    
+ ActiveSheet.PivotTables("PivotTable1").DataPivotField.PivotItems( _
+        "Sum of CPL").Caption = "Cost per Lead"
+
+ ActiveSheet.PivotTables("PivotTable1").DataPivotField.PivotItems( _
+        "Sum of Clicks").Caption = " Clicks"
+
+ ActiveSheet.PivotTables("PivotTable1").DataPivotField.PivotItems( _
+        "Sum of Conversions").Caption = "Leads"
+    
     'Sort descending by cost
-    PT.PivotFields("Account").AutoSort Order:-xlDescending, _
+    PT.PivotFields("Account").AutoSort Order:=xlDescending, _
         field:="Total Cost"
         
         'Show only the top 20 accounts
@@ -65,28 +342,28 @@ Set PT = PTCache.CreatePivotTable(TableDestination:=WSD. _
     
     'Loop through each state (or product, device, day etc dependign on how you edit this for various reports
     
-For Each PivItem in PT.PivotFields("State").PivotItems
+For Each PivItem In PT.PivotFields("Rep").PivotItems
     Ctr = Ctr + 1
-    PT.PivotFields("State").CurrentPage = PivItem.Name
+    PT.PivotFields("Rep").CurrentPage = PivItem.Name
     PT.ManualUpdate = False
     PT.ManualUpdate = True
     
     
     'Create a new blank workbook with one worksheet
-    Set WBN = Workbooks.Add(xlBATWorksheet)
+    Set WBN = Workbooks.Add(xlWBATWorksheet)
     Set WSR = WBN.Worksheets(1)
     WSR.Name = PivItem.Name
-    'Set Up Title for REport
-    With.WSR.[A1]
-    .Value = "Google Spend in" & _
-     PivItem.Name
+    'Set Up Title for Report
+    With WSR.[A1]
+    .Value = "Bing in " & _
+     PivItem.Name & "'s Region"
      End With
      
      'Copy the pivot table data to row 3 of the report sheet
      'Use offset to drop the page & title rows
-     PT.TableRange2.Offset(3,0).Copy
+     PT.TableRange2.Offset(3, 0).Copy
      
-     WSR.[A3].PasteSpecial Past:-xlPasteValuesandNumberFormats
+     WSR.[A3].PasteSpecial Paste:=xlPasteValuesAndNumberFormats
      LastRow = WSR.Cells(65536, 1).End(xlUp).Row
      WSR.Cells(LastRow, 1).Value = "Total"
      
@@ -102,7 +379,7 @@ For Each PivItem in PT.PivotFields("State").PivotItems
      PT.TableRange2.Clear
      Set PTCache = Nothing
      
-     MsgBox Ctr & "State reports have been created"
+     Msgbox Ctr & "Account reports have been created"
      
      End Sub
-        
+
